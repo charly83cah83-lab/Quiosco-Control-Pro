@@ -68,41 +68,64 @@ async function loadCash(){const r=await db.from('cash_settlements').select('amou
 async function loadReports(){if(role!=='owner')return;try{const s=checkError(await db.from('sales').select('id,total').eq('status','completed'));const e=checkError(await db.from('expenses').select('amount'));let cost=0;if(s.length){const items=checkError(await db.from('sale_items').select('id').in('sale_id',s.map(x=>x.id)));if(items.length){const costs=checkError(await db.from('sale_item_costs').select('line_cost').in('sale_item_id',items.map(x=>x.id)));cost=costs.reduce((a,x)=>a+Number(x.line_cost||0),0)}}const revenue=s.reduce((a,x)=>a+Number(x.total||0),0),expenses=e.reduce((a,x)=>a+Number(x.amount||0),0),net=revenue-cost-expenses,commission=revenue*commissionPercent/100,ownerShare=net-commission;$('reportStats').innerHTML=[['Ventas completadas',revenue],['Costo de mercancía vendida',cost],['Gastos del negocio',expenses],['Ganancia neta antes de comisión',net],['Comisión de tu sobrina ('+commissionPercent+'% de ventas)',commission],['Resultado del propietario después de comisión',ownerShare]].map(([n,v])=>'<div class="stat"><small>'+n+'</small><strong>'+money(v)+'</strong></div>').join('');$('reportRows').innerHTML='<tr><td>Ventas completadas</td><td>'+s.length+'</td></tr><tr><td>Total de ventas cobradas</td><td>'+money(revenue)+'</td></tr><tr><td>Comisión de tu sobrina ('+commissionPercent+'% del total vendido, sin descontar costos ni gastos)</td><td>'+money(commission)+'</td></tr><tr><td>Costos de mercancía y gastos del negocio</td><td>'+money(cost+expenses)+'</td></tr><tr><td>Resultado del propietario después de costos, gastos y comisión</td><td>'+money(ownerShare)+'</td></tr><tr><td>Estado</td><td>Acumulado de toda la actividad registrada; no incluye devoluciones ni pérdidas/mermas no registradas.</td></tr>';const inv=await db.from('products').select('id,name,stock_qty').eq('active',true).order('name');if(inv.error)throw inv.error;const ids=(inv.data||[]).map(p=>p.id);let pc={};if(ids.length){const q=await db.from('product_costs').select('product_id,purchase_cost').in('product_id',ids);if(q.error)throw q.error;(q.data||[]).forEach(x=>pc[x.product_id]=Number(x.purchase_cost||0))}let totalInventoryCost=0;$('productCostRows').innerHTML=(inv.data||[]).map(p=>{const unit=pc[p.id]||0,value=unit*Number(p.stock_qty||0);totalInventoryCost+=value;return '<tr><td>'+esc(p.name)+'</td><td>'+money(p.stock_qty)+'</td><td>'+money(unit)+'</td><td>'+money(value)+'</td></tr>'}).join('')||'<tr><td colspan="4" class="empty">No hay productos.</td></tr>'; $('productCostRows').innerHTML+='<tr><th colspan="3">Valor total del inventario a costo de compra</th><th>'+money(totalInventoryCost)+'</th></tr>'}catch(e){msg('No se pudo calcular el resumen: '+e.message,true)}}
 async function loadHistory(){const [s,m]=await Promise.all([db.from('sales').select('receipt_no,total,sold_at,status').order('sold_at',{ascending:false}).limit(30),db.from('stock_movements').select('movement_type,quantity,created_at,notes').order('created_at',{ascending:false}).limit(30)]);let rows=[];if(!s.error)rows.push(...s.data.map(x=>({d:x.sold_at,t:'Venta',n:x.receipt_no||x.status,v:money(x.total)})));if(!m.error)rows.push(...m.data.map(x=>({d:x.created_at,t:'Inventario: '+x.movement_type,n:x.notes||'',v:money(x.quantity)})));rows.sort((a,b)=>new Date(b.d)-new Date(a.d));$('historyRows').innerHTML=rows.slice(0,50).map(x=>'<tr><td>'+date(x.d)+'</td><td>'+esc(x.t)+'</td><td>'+esc(x.n)+'</td><td>'+esc(x.v)+'</td></tr>').join('')||'<tr><td colspan="4" class="empty">Sin movimientos.</td></tr>'}
 
+
+function renderYaiselInventory(rows){
+ const body=$('yaiselRows');
+ if(!rows.length){body.innerHTML='<tr><td colspan="4" class="empty">Todavía no has registrado mercancía de Yaisel.</td></tr>';return}
+ body.innerHTML=rows.map(x=>'<tr><td>'+esc(x.product_name)+'</td><td>'+esc(Number(x.quantity).toLocaleString('es-ES'))+'</td><td>'+esc(x.unit)+'</td><td><div class="actions"><button type="button" class="secondary" data-yadd="'+x.id+'">＋ Sumar cantidad</button><button type="button" class="secondary" data-yremove="'+x.id+'">− Restar cantidad</button><button type="button" class="danger" data-ydelete="'+x.id+'">Eliminar producto</button></div></td></tr>').join('');
+ body.querySelectorAll('[data-yadd]').forEach(b=>b.onclick=()=>changeYaiselQuantity(b.dataset.yadd,'add'));
+ body.querySelectorAll('[data-yremove]').forEach(b=>b.onclick=()=>changeYaiselQuantity(b.dataset.yremove,'remove'));
+ body.querySelectorAll('[data-ydelete]').forEach(b=>b.onclick=()=>deleteYaiselProduct(b.dataset.ydelete));
+}
 async function loadYaiselInventory(){
  if(role!=='owner')return;
- const r=await db.from('yaisel_inventory').select('id,product_name,quantity,unit,updated_at').order('product_name');
- if(r.error){msg('No se pudo cargar la mercancía de Yaisel: '+r.error.message,true);return}
- const rows=r.data||[];
- $('yaiselRows').innerHTML=rows.map(x=>'<tr><td>'+esc(x.product_name)+'</td><td>'+money(x.quantity)+'</td><td>'+esc(x.unit)+'</td><td><div class="actions"><button type="button" class="secondary" data-yadd="'+x.id+'">＋ Sumar</button><button type="button" class="secondary" data-yremove="'+x.id+'">− Restar</button><button type="button" class="danger" data-ydelete="'+x.id+'">Eliminar</button></div></td></tr>').join('')||'<tr><td colspan="4" class="empty">Todavía no has registrado mercancía de Yaisel.</td></tr>';
- $('yaiselRows').querySelectorAll('[data-yadd]').forEach(b=>b.onclick=()=>changeYaiselQuantity(b.dataset.yadd,'add'));
- $('yaiselRows').querySelectorAll('[data-yremove]').forEach(b=>b.onclick=()=>changeYaiselQuantity(b.dataset.yremove,'remove'));
- $('yaiselRows').querySelectorAll('[data-ydelete]').forEach(b=>b.onclick=()=>deleteYaiselProduct(b.dataset.ydelete));
+ const body=$('yaiselRows');
+ body.innerHTML='<tr><td colspan="4" class="muted">Cargando mercancía...</td></tr>';
+ const r=await db.from('yaisel_inventory').select('id,product_name,quantity,unit,updated_at').order('created_at',{ascending:true});
+ if(r.error){body.innerHTML='<tr><td colspan="4" class="bad">Error al cargar: '+esc(r.error.message)+'</td></tr>';msg('No se pudo cargar la mercancía de Yaisel: '+r.error.message,true);return}
+ renderYaiselInventory(r.data||[]);
 }
 $('yaiselAdd').onclick=async()=>{
  if(role!=='owner')return;
- const product_name=$('yaiselName').value.trim(),quantity=Number($('yaiselQty').value),unit=$('yaiselUnit').value.trim()||'unidad';
+ const product_name=$('yaiselName').value.trim();
+ const quantity=Number(String($('yaiselQty').value).replace(',','.'));
+ const unit=$('yaiselUnit').value.trim()||'unidad';
  if(!product_name||!Number.isFinite(quantity)||quantity<=0){msg('Escribe el producto y una cantidad mayor que cero.',true);return}
- try{checkError(await db.from('yaisel_inventory').insert({product_name,quantity,unit}));$('yaiselName').value='';$('yaiselQty').value='1';await loadYaiselInventory();msg('Producto agregado al control privado de Yaisel.')}catch(e){msg('No se pudo agregar: '+e.message,true)}
+ const button=$('yaiselAdd');button.disabled=true;button.textContent='Guardando...';
+ try{
+  const r=await db.from('yaisel_inventory').insert({product_name,quantity,unit}).select('id,product_name,quantity,unit,updated_at').single();
+  if(r.error)throw r.error;
+  $('yaiselName').value='';$('yaiselQty').value='1';
+  await loadYaiselInventory();
+  msg('Producto agregado correctamente al control independiente de Yaisel.');
+ }catch(e){msg('No se pudo agregar el producto: '+e.message,true);await loadYaiselInventory()}
+ finally{button.disabled=false;button.textContent='Agregar producto'}
 };
 async function changeYaiselQuantity(id,mode){
  if(role!=='owner')return;
  try{
-  const r=checkError(await db.from('yaisel_inventory').select('id,product_name,quantity').eq('id',id).single());
-  const label=mode==='add'?'¿Cuántas unidades deseas sumar a ':'¿Cuántas unidades deseas restar de ';
-  const answer=prompt(label+r.product_name+'?\nCantidad actual: '+r.quantity,'1');
+  const q=await db.from('yaisel_inventory').select('id,product_name,quantity').eq('id',id).single();
+  if(q.error)throw q.error;
+  const label=mode==='add'?'¿Cuánto deseas SUMAR a ':'¿Cuánto deseas RESTAR de ';
+  const answer=prompt(label+q.data.product_name+'?\nCantidad actual: '+q.data.quantity,'1');
   if(answer===null)return;
   const amount=Number(String(answer).replace(',','.'));
   if(!Number.isFinite(amount)||amount<=0){msg('Introduce una cantidad mayor que cero.',true);return}
-  if(mode==='remove'&&amount>Number(r.quantity)){msg('No puedes restar más de lo que hay registrado.',true);return}
-  const quantity=mode==='add'?Number(r.quantity)+amount:Number(r.quantity)-amount;
-  checkError(await db.from('yaisel_inventory').update({quantity,updated_at:new Date().toISOString()}).eq('id',id));
-  await loadYaiselInventory();msg(mode==='add'?'Cantidad sumada.':'Cantidad rebajada.')
+  if(mode==='remove'&&amount>Number(q.data.quantity)){msg('No puedes restar más de la cantidad registrada.',true);return}
+  const quantity=mode==='add'?Number(q.data.quantity)+amount:Number(q.data.quantity)-amount;
+  const u=await db.from('yaisel_inventory').update({quantity,updated_at:new Date().toISOString()}).eq('id',id).select('id').single();
+  if(u.error)throw u.error;
+  await loadYaiselInventory();msg(mode==='add'?'Cantidad sumada correctamente.':'Cantidad rebajada correctamente.');
  }catch(e){msg('No se pudo modificar la cantidad: '+e.message,true)}
 }
 async function deleteYaiselProduct(id){
  if(role!=='owner')return;
- if(!confirm('¿Eliminar este producto del control privado de Yaisel? Esto no afecta el inventario general ni las ventas.'))return;
- try{checkError(await db.from('yaisel_inventory').delete().eq('id',id));await loadYaiselInventory();msg('Producto eliminado del control privado.')}catch(e){msg('No se pudo eliminar: '+e.message,true)}
+ if(!confirm('¿Eliminar este producto del control privado de Yaisel? No afecta el inventario general ni las ventas.'))return;
+ try{
+  const d=await db.from('yaisel_inventory').delete().eq('id',id).select('id').single();
+  if(d.error)throw d.error;
+  await loadYaiselInventory();msg('Producto eliminado del control independiente.');
+ }catch(e){msg('No se pudo eliminar el producto: '+e.message,true)}
 }
 
 $('login').onclick=async()=>{try{$('authmsg').textContent='';const {data,error}=await db.auth.signInWithPassword({email:$('email').value.trim(),password:$('password').value});if(error)throw error;await enter(data.user)}catch(e){$('authmsg').textContent=e.message}};
