@@ -235,7 +235,8 @@ function calcCompute(transportOverride=null){
  const all=calcRead(),transport=transportOverride===null?calcNum('calcTransport'):transportOverride;
  const general=calcNum('calcGeneral'),mode=$('calcMode').value,gmode=$('calcGeneralMode').value;
  return all.map(p=>{
-  const t=mode==='manual'?p.manualTransport:transport*calcShare(p,all,mode);
+  const manualBase=all.reduce((a,x)=>a+x.manualTransport,0);
+  const t=mode==='manual'?(transportOverride===null?p.manualTransport:(manualBase>0?transportOverride*p.manualTransport/manualBase:0)):transport*calcShare(p,all,mode);
   const g=general*(gmode==='equal'?calcShare(p,all,'equal'):calcShare(p,all,gmode));
   const usable=Math.max(0,p.initial-p.shrink),total=p.purchase+t+g+p.direct;
   return {...p,transport:t,general:g,usable,total,unitCost:usable>0?total/usable:0,lossPct:p.initial>0?p.shrink/p.initial*100:0};
@@ -257,9 +258,10 @@ function calcRenderResults(){
  const revenueAtMarket=marketRows.reduce((a,p)=>a+p.market*p.usable,0);
  const profitAtMarket=marketRows.reduce((a,p)=>a+(p.market-p.unitCost)*p.usable,0);
  const totalInvestment=sum('total'),usable=sum('usable');
- $('calcSummary').innerHTML=[['Compra de mercancía',sum('purchase')],['Transporte asignado',sum('transport')],['Otros gastos',sum('general')+sum('direct')],['Inversión total real',totalInvestment],['Cantidad aprovechable total',usable],['Productos registrados',rows.filter(p=>p.name.trim()||p.purchase>0).length],['Venta estimada a precio de mercado',revenueAtMarket],['Resultado estimado a precio de mercado',profitAtMarket]].map(([l,v],i)=>'<div class="calc-stat"><small>'+l+'</small><strong class="'+(i===7?(v>=0?'good':'bad'):'')+'">'+(i===4?calcFmt(v)+' unidades':calcFmt(v)+(i===5?' / unidad':' CUP'))+'</strong></div>').join('');
+ $('calcSummary').innerHTML=[['Compra de mercancía',sum('purchase')],['Transporte asignado',sum('transport')],['Otros gastos',sum('general')+sum('direct')],['Inversión total real',totalInvestment],['Cantidad aprovechable total',usable],['Productos registrados',rows.filter(p=>p.name.trim()||p.purchase>0).length],['Venta estimada a precio de mercado',revenueAtMarket],['Resultado estimado a precio de mercado',profitAtMarket]].map(([l,v],i)=>'<div class="calc-stat"><small>'+l+'</small><strong class="'+(i===7?(v>=0?'good':'bad'):'')+'">'+(i===4?calcFmt(v):i===5?Math.round(v)+' productos':calcFmt(v)+' CUP')+'</strong></div>').join('');
  const manualTotal=sum('transport'),manualMode=$('calcMode').value==='manual';
  const unassigned=manualMode?transport-manualTotal:0;
+ const transportShown=manualMode?manualTotal:transport;
  let decision='Añade precios de mercado en los productos para evaluar si la compra es competitiva.';
  let cls='';
  if(marketRows.length){decision=profitAtMarket>0?'A los precios de mercado introducidos, la compra proyecta una ganancia de '+calcFmt(profitAtMarket)+' CUP.':profitAtMarket<0?'ALERTA: a los precios de mercado introducidos, la compra proyecta una pérdida de '+calcFmt(Math.abs(profitAtMarket))+' CUP.':'A los precios de mercado introducidos, la operación queda en punto de equilibrio.';cls=profitAtMarket>0?'good':'bad'}
