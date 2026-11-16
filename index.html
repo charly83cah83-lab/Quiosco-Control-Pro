@@ -257,12 +257,14 @@ function calcRenderResults(){
  const revenueAtMarket=marketRows.reduce((a,p)=>a+p.market*p.usable,0);
  const profitAtMarket=marketRows.reduce((a,p)=>a+(p.market-p.unitCost)*p.usable,0);
  const totalInvestment=sum('total'),usable=sum('usable');
- $('calcSummary').innerHTML=[['Compra de mercancía',sum('purchase')],['Transporte asignado',sum('transport')],['Otros gastos',sum('general')+sum('direct')],['Inversión total real',totalInvestment],['Cantidad aprovechable',usable],['Costo promedio por unidad',usable>0?totalInvestment/usable:0],['Venta estimada a precio de mercado',revenueAtMarket],['Resultado estimado a precio de mercado',profitAtMarket]].map(([l,v],i)=>'<div class="calc-stat"><small>'+l+'</small><strong class="'+(i===7?(v>=0?'good':'bad'):'')+'">'+(i===4?calcFmt(v)+' unidades':calcFmt(v)+(i===5?' / unidad':' CUP'))+'</strong></div>').join('');
+ $('calcSummary').innerHTML=[['Compra de mercancía',sum('purchase')],['Transporte asignado',sum('transport')],['Otros gastos',sum('general')+sum('direct')],['Inversión total real',totalInvestment],['Cantidad aprovechable total',usable],['Productos registrados',rows.filter(p=>p.name.trim()||p.purchase>0).length],['Venta estimada a precio de mercado',revenueAtMarket],['Resultado estimado a precio de mercado',profitAtMarket]].map(([l,v],i)=>'<div class="calc-stat"><small>'+l+'</small><strong class="'+(i===7?(v>=0?'good':'bad'):'')+'">'+(i===4?calcFmt(v)+' unidades':calcFmt(v)+(i===5?' / unidad':' CUP'))+'</strong></div>').join('');
  const manualTotal=sum('transport'),manualMode=$('calcMode').value==='manual';
  const unassigned=manualMode?transport-manualTotal:0;
  let decision='Añade precios de mercado en los productos para evaluar si la compra es competitiva.';
  let cls='';
  if(marketRows.length){decision=profitAtMarket>0?'A los precios de mercado introducidos, la compra proyecta una ganancia de '+calcFmt(profitAtMarket)+' CUP.':profitAtMarket<0?'ALERTA: a los precios de mercado introducidos, la compra proyecta una pérdida de '+calcFmt(Math.abs(profitAtMarket))+' CUP.':'A los precios de mercado introducidos, la operación queda en punto de equilibrio.';cls=profitAtMarket>0?'good':'bad'}
+ const missingQty=rows.filter(p=>p.purchase>0&&p.usable<=0);
+ if(missingQty.length){decision+=' Completa el peso o las unidades aprovechables de: '+missingQty.map(p=>p.name).join(', ')+'. Sin ese dato no se puede calcular su costo unitario ni rentabilidad.';cls='bad'}
  if(manualMode&&Math.abs(unassigned)>0.01){decision+=' Transporte sin distribuir: '+calcFmt(unassigned)+' CUP. Ajusta las asignaciones manuales.';cls='bad'}
  $('calcDecision').className='calc-alert '+cls;$('calcDecision').textContent=decision;
  const altRows=calcCompute(alt),altProfit=altRows.reduce((a,p)=>a+(p.market>0?(p.market-p.unitCost)*p.usable:0),0);
