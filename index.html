@@ -225,8 +225,10 @@ const calcRead=()=>calcProducts.map((p,i)=>({
 function calcShare(p,all,mode){
  if(mode==='manual')return p.manualTransport;
  if(mode==='equal')return all.length?1/all.length:0;
- const denom=all.reduce((a,x)=>a+(mode==='weight'?x.initial:mode==='packages'?x.packages:x.purchase),0);
- const value=mode==='weight'?p.initial:mode==='packages'?p.packages:p.purchase;
+ let denom=all.reduce((a,x)=>a+(mode==='weight'?x.initial:mode==='packages'?x.packages:x.purchase),0);
+ let value=mode==='weight'?p.initial:mode==='packages'?p.packages:p.purchase;
+ if(denom<=0){denom=all.reduce((a,x)=>a+x.purchase,0);value=p.purchase}
+ if(denom<=0){denom=all.length;value=1}
  return denom>0?value/denom:0;
 }
 function calcCompute(transportOverride=null){
