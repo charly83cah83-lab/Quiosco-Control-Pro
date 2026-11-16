@@ -33,6 +33,84 @@
 <button id="yaiselAdd">Agregar producto</button>
 <div class="tablewrap"><table><thead><tr><th>Producto</th><th>Cantidad</th><th>Unidad</th><th>Acciones</th></tr></thead><tbody id="yaiselRows"></tbody></table></div>
 </section>
+
+<section id="calculator" class="section">
+<style>
+#calculator .calc-hero{background:linear-gradient(125deg,#263b79,#452b75 58%,#173e61);border:1px solid #5865a5;border-radius:20px;padding:20px;margin-bottom:14px}
+#calculator .calc-hero h2{font-size:24px;margin:0 0 7px}
+#calculator .calc-card{background:linear-gradient(145deg,rgba(27,40,80,.96),rgba(15,24,50,.98));border:1px solid var(--line);border-radius:17px;padding:16px;margin:12px 0}
+#calculator .calc-fields{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+#calculator .calc-fields label{display:block;color:var(--muted);font-size:12px;margin-bottom:5px}
+#calculator input,#calculator select{width:100%;padding:11px;border-radius:10px;border:1px solid var(--line);background:#0d1633;color:var(--txt);min-width:0}
+#calculator .calc-products{display:grid;gap:12px}
+#calculator .calc-product{border:1px solid #3a4b7e;background:#111b39;border-radius:15px;padding:14px}
+#calculator .calc-product h4{margin:0 0 10px}
+#calculator .calc-statgrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px}
+#calculator .calc-stat{background:#101a37;border:1px solid var(--line);border-radius:13px;padding:12px;min-width:0}
+#calculator .calc-stat small{display:block;color:var(--muted);font-size:11px}
+#calculator .calc-stat strong{display:block;font-size:19px;margin-top:5px;overflow-wrap:anywhere}
+#calculator .calc-table{overflow:auto;max-height:440px}
+#calculator .calc-table table{min-width:540px}
+#calculator .calc-table th{position:sticky;top:0;background:#182448}
+#calculator .calc-pill{display:inline-block;padding:5px 9px;border-radius:20px;background:#24345f;color:#dce4ff;font-size:11px}
+#calculator .calc-alert{padding:12px;border-radius:12px;margin:10px 0;background:#30294b;border:1px solid #5a4a86}
+#calculator .calc-alert.good{background:#123c37;border-color:#236f60;color:#9cf1d8}
+#calculator .calc-alert.bad{background:#4b2635;border-color:#8e4057;color:#ffc0cc}
+#calculator .calc-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+#calculator .calc-muted{color:var(--muted);font-size:12px}
+#calculator details{border:1px solid var(--line);border-radius:12px;padding:11px;margin:10px 0;background:#111b39}
+#calculator summary{cursor:pointer;font-weight:700}
+@media(max-width:760px){#calculator .calc-fields{grid-template-columns:repeat(2,minmax(0,1fr))}#calculator .calc-statgrid{grid-template-columns:repeat(2,minmax(0,1fr))}#calculator .calc-hero h2{font-size:21px}}
+@media(max-width:420px){#calculator .calc-fields{grid-template-columns:1fr}}
+</style>
+<div class="calc-hero">
+  <div class="calc-pill">HERRAMIENTA PRIVADA DEL PROPIETARIO · SOLO ANÁLISIS</div>
+  <h2>🧮 Calculadora inteligente</h2>
+  <p style="margin:0;color:#e0e7ff">Calcula antes de comprar: costo real, transporte, merma, precio competitivo y ganancias. Haz simulaciones sin tocar inventario, ventas ni liquidaciones.</p>
+</div>
+<div class="calc-card">
+  <h3 style="margin-top:0">1. Gastos generales y transporte</h3>
+  <div class="calc-fields">
+    <div><label>Transporte principal (CUP)</label><input id="calcTransport" type="number" min="0" step=".01" value="0"></div>
+    <div><label>Transporte alternativo (CUP)</label><input id="calcTransportAlt" type="number" min="0" step=".01" value="0"></div>
+    <div><label>Otros gastos generales (CUP)</label><input id="calcGeneral" type="number" min="0" step=".01" value="0"></div>
+    <div><label>Cómo repartir el transporte</label><select id="calcMode"><option value="value">Proporcional al valor de compra</option><option value="weight">Por peso / cantidad inicial</option><option value="packages">Por cajas o paquetes</option><option value="manual">Asignación manual por producto</option></select></div>
+    <div><label>Cómo repartir otros gastos</label><select id="calcGeneralMode"><option value="value">Proporcional al valor de compra</option><option value="weight">Por peso / cantidad inicial</option><option value="packages">Por cajas o paquetes</option><option value="equal">En partes iguales</option></select></div>
+  </div>
+  <p class="calc-muted">El transporte alternativo sirve para comparar otro transportista. No se suma al principal: es un escenario distinto.</p>
+</div>
+<div class="calc-card">
+  <div class="actions" style="justify-content:space-between;align-items:center">
+    <div><h3 style="margin:0">2. Productos de la compra</h3><small class="calc-muted">Añade pollo, cerdo, huevos o cualquier mercancía.</small></div>
+    <button type="button" id="calcAddProduct">＋ Añadir producto</button>
+  </div>
+  <div id="calcProducts" class="calc-products" style="margin-top:12px"></div>
+  <div class="calc-actions"><button type="button" class="secondary" id="calcExample">Cargar ejemplo pollo</button><button type="button" class="secondary" id="calcClear">Limpiar simulación</button></div>
+</div>
+<div class="calc-card">
+  <h3 style="margin-top:0">3. Resumen de la inversión</h3>
+  <div id="calcSummary" class="calc-statgrid"></div>
+  <div id="calcDecision" class="calc-alert">Introduce los productos y los gastos para analizar la compra.</div>
+  <div id="calcComparison" class="tablewrap"></div>
+</div>
+<div class="calc-card">
+  <h3 style="margin-top:0">4. Tabla de rentabilidad por producto</h3>
+  <div class="calc-fields">
+    <div><label>Producto que deseas analizar</label><select id="calcSelectedProduct"></select></div>
+    <div><label>Tipo de tabla</label><select id="calcProfitMode"><option value="markup">Ganancia % sobre costo</option><option value="margin">Margen % sobre precio de venta</option></select></div>
+  </div>
+  <div id="calcUnitSummary" class="calc-alert">Selecciona o introduce un producto.</div>
+  <div class="calc-table"><table><thead><tr><th>Porcentaje</th><th>Precio de venta por unidad</th><th>Ganancia CUP / unidad</th><th>Ganancia CUP total</th><th>Margen sobre venta</th></tr></thead><tbody id="calcProfitRows"></tbody></table></div>
+  <p class="calc-muted">La tabla muestra porcentajes del 1 % al 50 %. “Sobre costo” aplica un recargo al costo; “sobre venta” calcula el margen deseado como parte del precio final. Los importes se redondean a dos decimales.</p>
+</div>
+<div class="calc-card">
+  <h3 style="margin-top:0">5. Comparar el precio de mercado</h3>
+  <p class="calc-muted">Introduce el precio que se vende en la calle en cada ficha de producto. El sistema indicará si la compra deja ganancia, queda en punto de equilibrio o genera pérdidas a ese precio.</p>
+  <div id="calcMarketResults"></div>
+</div>
+<div class="calc-alert">🔒 <strong>Modo aislado:</strong> esta calculadora trabaja únicamente con los datos que escribas aquí en esta pantalla. No consulta ni modifica tablas de Supabase, inventario, precios registrados, ventas, comisiones, mercancía de Yaisel ni liquidaciones. Al salir o recargar, la simulación se reinicia.</div>
+</section>
+
 </main><p id="toast" class="muted" aria-live="polite"></p>
 </div>
 <script>
@@ -49,9 +127,9 @@ function checkError(r){if(r.error)throw r.error;return r.data}
 async function enter(u){user=u;const r=await db.from('profiles').select('id,display_name,email,role,active').eq('id',u.id).maybeSingle();if(r.error)throw r.error;profile=r.data;if(!profile||!profile.active){await db.auth.signOut();throw new Error('Tu perfil aún no está activado. Confirma el correo y solicita al propietario que revise tu acceso.')}
 role=profile.role;$('auth').classList.add('hidden');$('app').classList.remove('hidden');$('logout').classList.remove('hidden');$('who').textContent=(profile.display_name||profile.email||u.email)+' · '+(role==='owner'?'Propietario':'Vendedor');
 buildNav();await refresh()}
-const navs=[['dash','Mi comisión'],['products','Productos'],['delivery','Entradas'],['sale','Registrar venta'],['expenses','Gastos'],['cash','Entregas de dinero'],['reports','Costos y gastos'],['cycles','Liquidaciones'],['history','Historial'],['yaisel','Mercancía de Yaisel']];
+const navs=[['dash','Mi comisión'],['products','Productos'],['delivery','Entradas'],['sale','Registrar venta'],['expenses','Gastos'],['cash','Entregas de dinero'],['reports','Costos y gastos'],['cycles','Liquidaciones'],['history','Historial'],['yaisel','Mercancía de Yaisel'],['calculator','Calculadora inteligente']];
 function buildNav(){ $('nav').innerHTML=navs.filter(([id])=>role==='owner'||['dash','products','sale'].includes(id)).map(([id,n],i)=>'<button data-tab="'+id+'" class="'+(i===0?'active':'')+'">'+n+'</button>').join('');$('nav').querySelectorAll('button').forEach(b=>b.onclick=()=>showTab(b.dataset.tab));document.querySelectorAll('.owneronly').forEach(e=>e.classList.toggle('hidden',role!=='owner'));$('productForm').classList.toggle('hidden',role!=='owner');['delivery','expenses','cash','reports','cycles','history','yaisel'].forEach(id=>$(id).classList.toggle('hidden',role!=='owner'));$('discountField').classList.toggle('hidden',role!=='owner');$('saleNoteField').classList.toggle('hidden',role!=='owner');document.querySelector('#sale .field:has(#spay)').classList.toggle('hidden',role!=='owner');$('products').querySelector('h2').textContent=role==='owner'?'Inventario':'Productos disponibles';$('productHead').innerHTML=role==='owner'?'<th>Producto</th><th>Precio</th><th>Existencia</th><th>Estado</th><th>Acciones</th>':'<th>Producto</th><th>Precio de venta</th><th>Existencia disponible</th>'}
-function showTab(id){document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));$(id).classList.add('active');$('nav').querySelectorAll('button').forEach(b=>b.classList.toggle('active',b.dataset.tab===id));if(id==='cash')loadCash();if(id==='expenses')loadExpenses();if(id==='reports')loadReports();if(id==='cycles')loadCycles();if(id==='history')loadHistory();if(id==='yaisel'&&role==='owner')loadYaiselInventory()}
+function showTab(id){document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));$(id).classList.add('active');$('nav').querySelectorAll('button').forEach(b=>b.classList.toggle('active',b.dataset.tab===id));if(id==='calculator')initCalculator();if(id==='cash')loadCash();if(id==='expenses')loadExpenses();if(id==='reports')loadReports();if(id==='cycles')loadCycles();if(id==='history')loadHistory();if(id==='yaisel'&&role==='owner')loadYaiselInventory()}
 async function refresh(){const cfg=await db.from('app_settings').select('seller_commission_percent').limit(1).maybeSingle();if(!cfg.error&&cfg.data)commissionPercent=Number(cfg.data.seller_commission_percent??5);await loadProducts();await loadDash();if(role==='owner'){await loadCash();await loadExpenses()}}
 async function loadProducts(){const r=await db.from('products').select('id,name,category,unit,sale_price,stock_qty,low_stock_threshold,active').eq('active',true).order('name');products=checkError(r)||[];let costs={};if(role==='owner'&&products.length){const cr=await db.from('product_costs').select('product_id,purchase_cost').in('product_id',products.map(p=>p.id));if(!cr.error)(cr.data||[]).forEach(x=>costs[x.product_id]=Number(x.purchase_cost||0))}$('productRows').innerHTML=products.map(p=>'<tr><td>'+esc(p.name)+(role==='owner'?'<br><small>'+esc(p.category||'')+'</small>':'')+'</td><td>'+money(p.sale_price)+'</td>'+(role==='owner'?'<td>'+money(p.stock_qty)+'</td><td>'+(Number(p.stock_qty)<=Number(p.low_stock_threshold)?'<span class="bad">Stock bajo</span>':'<span class="good">Disponible</span>')+'</td><td><div class="actions"><button type="button" data-edit-price="'+p.id+'" class="secondary">Precio venta</button><button type="button" data-edit-cost="'+p.id+'" class="secondary">Costo</button><button type="button" data-adjust-stock="'+p.id+'" class="secondary">Quitar cantidad</button><button type="button" data-deactivate="'+p.id+'" class="danger">Eliminar producto</button></div><small>Costo unitario: '+money(costs[p.id]||0)+'</small></td>':'<td>'+money(p.stock_qty)+'</td>')+'</tr>').join('')||'<tr><td colspan="'+(role==='owner'?5:3)+'" class="empty">Aún no hay productos.</td></tr>';if(role==='owner'){$('productRows').querySelectorAll('[data-edit-price]').forEach(b=>b.onclick=()=>changeProductPrice(b.dataset.editPrice));$('productRows').querySelectorAll('[data-edit-cost]').forEach(b=>b.onclick=()=>changeProductCost(b.dataset.editCost));$('productRows').querySelectorAll('[data-adjust-stock]').forEach(b=>b.onclick=()=>adjustStock(b.dataset.adjustStock));$('productRows').querySelectorAll('[data-deactivate]').forEach(b=>b.onclick=()=>deactivateProduct(b.dataset.deactivate))}for(const id of ['dproduct','sproduct'])$(id).innerHTML=products.map(p=>'<option value="'+p.id+'">'+esc(p.name)+' · '+money(p.sale_price)+' · Stock: '+money(p.stock_qty)+'</option>').join('')}
 async function changeProductPrice(id){if(role!=='owner')return;const p=products.find(x=>x.id===id);if(!p)return;const answer=prompt('Nuevo precio de venta para '+p.name+':',String(p.sale_price));if(answer===null)return;const price=Number(String(answer).replace(',','.'));if(!Number.isFinite(price)||price<=0){msg('Escribe un precio mayor que cero.',true);return}try{const r=checkError(await db.from('products').update({sale_price:price,updated_at:new Date().toISOString()}).eq('id',id).select('id').maybeSingle());if(!r)throw new Error('No se pudo actualizar. Verifica que hayas entrado como propietario.');await refresh();msg('Precio de venta actualizado.')}catch(e){msg('No se pudo cambiar el precio: '+e.message,true)}}
@@ -130,6 +208,101 @@ async function deleteYaiselProduct(id){
   if(d.error)throw d.error;
   await loadYaiselInventory();msg('Producto eliminado del control independiente.');
  }catch(e){msg('No se pudo eliminar el producto: '+e.message,true)}
+}
+
+
+/* Calculadora inteligente: simulador local aislado. No realiza llamadas a Supabase. */
+let calcProducts=[{name:'',purchase:0,packages:1,initial:0,shrink:0,direct:0,market:0,unit:'unidad',manualTransport:0}];
+const calcNum=id=>Math.max(0,Number(String($(id)?.value??'0').replace(',','.'))||0);
+const calcFmt=n=>money(Number.isFinite(n)?n:0);
+const calcRead=()=>calcProducts.map((p,i)=>({
+ name:p.name||'Producto '+(i+1),purchase:Math.max(0,Number(p.purchase)||0),
+ packages:Math.max(0,Number(p.packages)||0),initial:Math.max(0,Number(p.initial)||0),
+ shrink:Math.max(0,Number(p.shrink)||0),direct:Math.max(0,Number(p.direct)||0),
+ market:Math.max(0,Number(p.market)||0),unit:p.unit||'unidad',
+ manualTransport:Math.max(0,Number(p.manualTransport)||0)
+}));
+function calcShare(p,all,mode){
+ if(mode==='manual')return p.manualTransport;
+ if(mode==='equal')return all.length?1/all.length:0;
+ let denom=all.reduce((a,x)=>a+(mode==='weight'?x.initial:mode==='packages'?x.packages:x.purchase),0);
+ let value=mode==='weight'?p.initial:mode==='packages'?p.packages:p.purchase;
+ if(denom<=0){denom=all.reduce((a,x)=>a+x.purchase,0);value=p.purchase}
+ if(denom<=0){denom=all.length;value=1}
+ return denom>0?value/denom:0;
+}
+function calcCompute(transportOverride=null){
+ const all=calcRead(),transport=transportOverride===null?calcNum('calcTransport'):transportOverride;
+ const general=calcNum('calcGeneral'),mode=$('calcMode').value,gmode=$('calcGeneralMode').value;
+ return all.map(p=>{
+  const manualBase=all.reduce((a,x)=>a+x.manualTransport,0);
+  const t=mode==='manual'?(transportOverride===null?p.manualTransport:(manualBase>0?transportOverride*p.manualTransport/manualBase:0)):transport*calcShare(p,all,mode);
+  const g=general*(gmode==='equal'?calcShare(p,all,'equal'):calcShare(p,all,gmode));
+  const usable=Math.max(0,p.initial-p.shrink),total=p.purchase+t+g+p.direct;
+  return {...p,transport:t,general:g,usable,total,unitCost:usable>0?total/usable:0,lossPct:p.initial>0?p.shrink/p.initial*100:0};
+ });
+}
+function calcRenderProducts(){
+ const host=$('calcProducts');
+ host.innerHTML=calcProducts.map((p,i)=>'<div class="calc-product" data-calc-index="'+i+'"><div class="actions" style="justify-content:space-between"><h4>📦 Producto '+(i+1)+'</h4><button type="button" class="danger" data-calc-remove="'+i+'" '+(calcProducts.length===1?'disabled':'')+'>Eliminar</button></div><div class="calc-fields"><div><label>Nombre del producto</label><input data-calc-field="name" data-i="'+i+'" value="'+esc(p.name)+'" placeholder="Ej. Pollo"></div><div><label>Compra total (CUP)</label><input data-calc-field="purchase" data-i="'+i+'" type="number" min="0" step=".01" value="'+p.purchase+'"></div><div><label>Cajas / paquetes</label><input data-calc-field="packages" data-i="'+i+'" type="number" min="0" step=".01" value="'+p.packages+'"></div><div><label>Peso o unidades iniciales</label><input data-calc-field="initial" data-i="'+i+'" type="number" min="0" step=".01" value="'+p.initial+'"></div><div><label>Merma total (misma unidad)</label><input data-calc-field="shrink" data-i="'+i+'" type="number" min="0" step=".01" value="'+p.shrink+'"></div><div><label>Unidad de venta (lb, kg, unidad...)</label><input data-calc-field="unit" data-i="'+i+'" value="'+esc(p.unit)+'"></div><div><label>Otros gastos directos (CUP)</label><input data-calc-field="direct" data-i="'+i+'" type="number" min="0" step=".01" value="'+p.direct+'"></div><div><label>Precio actual del mercado por unidad (CUP)</label><input data-calc-field="market" data-i="'+i+'" type="number" min="0" step=".01" value="'+p.market+'"></div><div><label>Transporte asignado manualmente (CUP)</label><input data-calc-field="manualTransport" data-i="'+i+'" type="number" min="0" step=".01" value="'+p.manualTransport+'"></div></div></div>').join('');
+ host.querySelectorAll('[data-calc-field]').forEach(el=>el.addEventListener('input',()=>{
+  const i=Number(el.dataset.i),key=el.dataset.calcField;
+  calcProducts[i][key]=key==='name'||key==='unit'?el.value:Math.max(0,Number(String(el.value).replace(',','.'))||0);
+  calcRenderResults();
+ }));
+ host.querySelectorAll('[data-calc-remove]').forEach(b=>b.onclick=()=>{if(calcProducts.length>1){calcProducts.splice(Number(b.dataset.calcRemove),1);calcRenderProducts();calcRenderResults()}});
+}
+function calcRenderResults(){
+ const rows=calcCompute(),all=calcRead(),sum=(key)=>rows.reduce((a,p)=>a+p[key],0);
+ const transport=calcNum('calcTransport'),alt=calcNum('calcTransportAlt'),marketRows=rows.filter(p=>p.market>0);
+ const revenueAtMarket=marketRows.reduce((a,p)=>a+p.market*p.usable,0);
+ const profitAtMarket=marketRows.reduce((a,p)=>a+(p.market-p.unitCost)*p.usable,0);
+ const totalInvestment=sum('total'),usable=sum('usable');
+ $('calcSummary').innerHTML=[['Compra de mercancía',sum('purchase')],['Transporte asignado',sum('transport')],['Otros gastos',sum('general')+sum('direct')],['Inversión total real',totalInvestment],['Cantidad aprovechable total',usable],['Productos registrados',rows.filter(p=>p.name.trim()||p.purchase>0).length],['Venta estimada a precio de mercado',revenueAtMarket],['Resultado estimado a precio de mercado',profitAtMarket]].map(([l,v],i)=>'<div class="calc-stat"><small>'+l+'</small><strong class="'+(i===7?(v>=0?'good':'bad'):'')+'">'+(i===4?calcFmt(v):i===5?Math.round(v)+' productos':calcFmt(v)+' CUP')+'</strong></div>').join('');
+ const manualTotal=sum('transport'),manualMode=$('calcMode').value==='manual';
+ const unassigned=manualMode?transport-manualTotal:0;
+ const transportShown=manualMode?manualTotal:transport;
+ let decision='Añade precios de mercado en los productos para evaluar si la compra es competitiva.';
+ let cls='';
+ if(marketRows.length){decision=profitAtMarket>0?'A los precios de mercado introducidos, la compra proyecta una ganancia de '+calcFmt(profitAtMarket)+' CUP.':profitAtMarket<0?'ALERTA: a los precios de mercado introducidos, la compra proyecta una pérdida de '+calcFmt(Math.abs(profitAtMarket))+' CUP.':'A los precios de mercado introducidos, la operación queda en punto de equilibrio.';cls=profitAtMarket>0?'good':'bad'}
+ const missingQty=rows.filter(p=>p.purchase>0&&p.usable<=0);
+ if(missingQty.length){decision+=' Completa el peso o las unidades aprovechables de: '+missingQty.map(p=>p.name).join(', ')+'. Sin ese dato no se puede calcular su costo unitario ni rentabilidad.';cls='bad'}
+ if(manualMode&&Math.abs(unassigned)>0.01){decision+=' Transporte sin distribuir: '+calcFmt(unassigned)+' CUP. Ajusta las asignaciones manuales.';cls='bad'}
+ $('calcDecision').className='calc-alert '+cls;$('calcDecision').textContent=decision;
+ const altRows=calcCompute(alt),altProfit=altRows.reduce((a,p)=>a+(p.market>0?(p.market-p.unitCost)*p.usable:0),0);
+ $('calcComparison').innerHTML='<table><thead><tr><th>Escenario</th><th>Transporte</th><th>Ganancia estimada a precio de mercado</th></tr></thead><tbody><tr><td>Transporte principal</td><td>'+calcFmt(transport)+' CUP</td><td>'+calcFmt(profitAtMarket)+' CUP</td></tr><tr><td>Transporte alternativo</td><td>'+calcFmt(alt)+' CUP</td><td>'+calcFmt(altProfit)+' CUP</td></tr></tbody></table><small class="calc-muted">La comparación utiliza los precios de mercado introducidos. Los productos sin precio de mercado se excluyen del resultado estimado.</small>';
+ const select=$('calcSelectedProduct'),old=select.value;
+ select.innerHTML=rows.map((p,i)=>'<option value="'+i+'">'+esc(p.name)+'</option>').join('');
+ if(old!==''&&Number(old)<rows.length)select.value=old;
+ calcRenderProfitTable();
+ $('calcMarketResults').innerHTML=rows.map(p=>{
+  const result=p.market>0?(p.market-p.unitCost)*p.usable:null;
+  return '<div class="calc-product"><strong>'+esc(p.name)+'</strong><p class="calc-muted">Costo real: '+calcFmt(p.unitCost)+' CUP/'+esc(p.unit)+' · Peso/cantidad aprovechable: '+calcFmt(p.usable)+' '+esc(p.unit)+' · Merma: '+calcFmt(p.shrink)+' '+esc(p.unit)+' ('+p.lossPct.toFixed(2)+'%)</p>'+(p.market>0?'<p>Mercado: <strong>'+calcFmt(p.market)+' CUP/'+esc(p.unit)+'</strong> · Resultado estimado: <strong class="'+(result>=0?'good':'bad')+'">'+calcFmt(result)+' CUP</strong></p>':'<p class="calc-muted">Introduce el precio de mercado para evaluar este producto.</p>')+'</div>';
+ }).join('');
+}
+function calcRenderProfitTable(){
+ const rows=calcCompute(),i=Number($('calcSelectedProduct').value||0),p=rows[i],mode=$('calcProfitMode').value;
+ if(!p){$('calcProfitRows').innerHTML='';return}
+ $('calcUnitSummary').textContent='Costo real: '+calcFmt(p.unitCost)+' CUP por '+p.unit+'. Costo total del lote: '+calcFmt(p.total)+' CUP. Cantidad aprovechable: '+calcFmt(p.usable)+' '+p.unit+'.';
+ $('calcProfitRows').innerHTML=Array.from({length:50},(_,n)=>{
+  const pct=n+1,price=mode==='markup'?p.unitCost*(1+pct/100):p.unitCost/(1-pct/100),gain=price-p.unitCost,margin=price>0?gain/price*100:0;
+  return '<tr><td><strong>'+pct+'%</strong></td><td>'+calcFmt(price)+' CUP</td><td class="good">'+calcFmt(gain)+' CUP</td><td class="good">'+calcFmt(gain*p.usable)+' CUP</td><td>'+margin.toFixed(2)+'%</td></tr>';
+ }).join('');
+}
+function calcReset(){
+ calcProducts=[{name:'',purchase:0,packages:1,initial:0,shrink:0,direct:0,market:0,unit:'unidad',manualTransport:0}];
+ $('calcTransport').value='0';$('calcTransportAlt').value='0';$('calcGeneral').value='0';$('calcMode').value='value';$('calcGeneralMode').value='value';
+ calcRenderProducts();calcRenderResults();
+}
+function initCalculator(){
+ if($('calcAddProduct').dataset.ready)return;
+ $('calcAddProduct').dataset.ready='1';
+ $('calcAddProduct').onclick=()=>{calcProducts.push({name:'',purchase:0,packages:1,initial:0,shrink:0,direct:0,market:0,unit:'unidad',manualTransport:0});calcRenderProducts();calcRenderResults()};
+ $('calcClear').onclick=()=>{if(confirm('¿Limpiar todos los datos de esta simulación?'))calcReset()};
+ $('calcExample').onclick=()=>{calcProducts=[{name:'Pollo',purchase:26000,packages:1,initial:33,shrink:2,direct:0,market:0,unit:'lb',manualTransport:0},{name:'Cerdo',purchase:19500,packages:1,initial:0,shrink:0,direct:0,market:0,unit:'lb',manualTransport:0},{name:'Huevo',purchase:5000,packages:1,initial:0,shrink:0,direct:0,market:0,unit:'unidad',manualTransport:0}];$('calcTransport').value='15000';$('calcTransportAlt').value='';$('calcGeneral').value='0';$('calcMode').value='value';$('calcGeneralMode').value='value';calcRenderProducts();calcRenderResults()};
+ ['calcTransport','calcTransportAlt','calcGeneral','calcMode','calcGeneralMode'].forEach(id=>$(id).addEventListener('input',calcRenderResults));
+ $('calcSelectedProduct').addEventListener('change',calcRenderProfitTable);$('calcProfitMode').addEventListener('change',calcRenderProfitTable);
+ calcRenderProducts();calcRenderResults();
 }
 
 $('login').onclick=async()=>{try{$('authmsg').textContent='';const {data,error}=await db.auth.signInWithPassword({email:$('email').value.trim(),password:$('password').value});if(error)throw error;await enter(data.user)}catch(e){$('authmsg').textContent=e.message}};
