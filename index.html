@@ -444,7 +444,7 @@ refresh=async function(){
  if(navigator.onLine){const cfg=await db.from('app_settings').select('seller_commission_percent').limit(1).maybeSingle();if(!cfg.error&&cfg.data)commissionPercent=Number(cfg.data.seller_commission_percent??5)}
  await loadProducts();
  if(!navigator.onLine||offlineDataMode){
-  $('dash').innerHTML='<div class="card"><h2>Modo sin conexión</h2><p class="notice">Los datos mostrados proceden de la última sincronización de este teléfono. Las ventas nuevas quedan pendientes hasta recuperar internet.</p><p>Ventas pendientes: <strong>'+((await offlineQueueForUser()).length)+'</strong></p></div>';
+  const offlineQueue=await offlineQueueForUser();const pendingRows=offlineQueue.map(x=>'<tr><td>'+esc(x.product_name)+'</td><td>'+money(x.quantity)+'</td><td>'+money(x.expected_sale_price)+' CUP</td><td>'+date(x.created_at)+'</td><td>'+(x.status==='conflict'?'<span class="bad">Revisar</span>':'<span class="good">Pendiente</span>')+'</td></tr>').join('');$('dash').innerHTML='<div class="card"><h2>Modo sin conexión</h2><p class="notice">Los datos mostrados proceden de la última sincronización de este teléfono. Las ventas nuevas quedan guardadas aquí y se enviarán al recuperar internet.</p><h3>Ventas pendientes de sincronizar</h3><div class="tablewrap"><table><thead><tr><th>Producto vendido</th><th>Cantidad</th><th>Precio guardado</th><th>Fecha local</th><th>Estado</th></tr></thead><tbody>'+ (pendingRows||'<tr><td colspan="5" class="empty">No hay ventas pendientes.</td></tr>') +'</tbody></table></div></div>';
  }else{await loadDash();if(role==='owner'){await loadCash();await loadExpenses()}}
  await offlineUpdateBanner();
 };
