@@ -378,6 +378,7 @@ $('edate').value=new Date().toISOString().slice(0,10);
 
 <script>
 /* Modo offline progresivo: conserva el flujo actual y sincroniza ventas con clave idempotente. */
+let offlineDataMode=false;
 const offlineDbPromise = new Promise((resolve,reject)=>{
   if(!('indexedDB' in window)){reject(new Error('Este navegador no permite almacenamiento local seguro'));return}
   const request=indexedDB.open('quiosco-control-pro-offline',1);
@@ -396,7 +397,7 @@ async function offlineUpdateBanner(){
  const host=$('offlineStatus');if(!host)return;
  let queue=[];try{queue=await offlineQueueForUser()}catch(_){}
  const pending=queue.filter(x=>x.status==='pending').length,conflicts=queue.filter(x=>x.status==='conflict').length;
- if(!navigator.onLine){host.innerHTML='SIN INTERNET · '+(role==='seller'?'Puedes registrar ventas con el inventario guardado en este teléfono.':'Consulta únicamente los datos guardados en este teléfono.')+(pending?' · '+pending+' venta(s) pendiente(s) de sincronizar.':'')+(conflicts?' · '+conflicts+' venta(s) requieren revisión.':'');host.style.display='block';return}
+ if(!navigator.onLine||offlineDataMode){host.innerHTML='SIN CONEXIÓN CON EL SERVIDOR · '+(role==='seller'?'Puedes registrar ventas con el inventario guardado en este teléfono.':'Consulta únicamente los datos guardados en este teléfono.')+(pending?' · '+pending+' venta(s) pendiente(s) de sincronizar.':'')+(conflicts?' · '+conflicts+' venta(s) requieren revisión.':'');host.style.display='block';return}
  if(pending||conflicts){host.innerHTML='CONEXIÓN DISPONIBLE · '+pending+' venta(s) pendiente(s) · '+conflicts+' requieren revisión. <button type="button" id="offlineRetry">Sincronizar / reintentar</button>';host.style.display='block';const b=$('offlineRetry');if(b)b.onclick=()=>syncOfflineSales(true)}
  else{host.textContent='';host.style.display='none'}
 }
@@ -427,10 +428,10 @@ function offlineRenderProducts(){
 loadProducts=async function(){
  let base=[];
  if(navigator.onLine){
-  try{await originalLoadProducts();base=products.map(p=>({...p}));await offlineKVSet('products:'+user.id,base)}
-  catch(e){base=await offlineKVGet('products:'+user.id);if(!base)throw e}
+  try{await originalLoadProducts();base=products.map(p=>({...p}));await offlineKVSet('products:'+user.id,base);offlineDataMode=false}
+  catch(e){base=await offlineKVGet('products:'+user.id);if(!base)throw e;offlineDataMode=true}
  }else{
-  base=await offlineKVGet('products:'+user.id);
+  base=await offlineKVGet('products:'+user.id);offlineDataMode=true;
   if(!base)throw new Error('Conéctate una vez para guardar el inventario en este teléfono.');
  }
  products=(base||[]).map(p=>({...p}));
@@ -442,7 +443,7 @@ refresh=async function(){
  if(navigator.onLine)await syncOfflineSales(false);
  if(navigator.onLine){const cfg=await db.from('app_settings').select('seller_commission_percent').limit(1).maybeSingle();if(!cfg.error&&cfg.data)commissionPercent=Number(cfg.data.seller_commission_percent??5)}
  await loadProducts();
- if(!navigator.onLine){
+ if(!navigator.onLine||offlineDataMode){
   $('dash').innerHTML='<div class="card"><h2>Modo sin conexión</h2><p class="notice">Los datos mostrados proceden de la última sincronización de este teléfono. Las ventas nuevas quedan pendientes hasta recuperar internet.</p><p>Ventas pendientes: <strong>'+((await offlineQueueForUser()).length)+'</strong></p></div>';
  }else{await loadDash();if(role==='owner'){await loadCash();await loadExpenses()}}
  await offlineUpdateBanner();
@@ -450,11 +451,11 @@ refresh=async function(){
 enter=async function(u){
  user=u;
  let r=null;
- if(navigator.onLine){r=await db.from('profiles').select('id,display_name,email,role,active').eq('id',u.id).maybeSingle();if(r.error)throw r.error;profile=r.data;if(profile)await offlineKVSet('profile:'+u.id,profile)}
- else{profile=await offlineKVGet('profile:'+u.id)}
+ if(navigator.onLine){try{r=await db.from('profiles').select('id,display_name,email,role,active').eq('id',u.id).maybeSingle();if(r.error)throw r.error;profile=r.data;if(profile)await offlineKVSet('profile:'+u.id,profile)}catch(e){if(!offlineIsNetworkError(e))throw e;profile=await offlineKVGet('profile:'+u.id);offlineDataMode=true}}
+ else{profile=await offlineKVGet('profile:'+u.id);offlineDataMode=true}
  if(!profile||!profile.active){if(navigator.onLine)await db.auth.signOut();throw new Error('Para usar el modo sin conexión debes haber iniciado sesión antes y haber sincronizado este teléfono.')}
  role=profile.role;$('auth').classList.add('hidden');$('app').classList.remove('hidden');$('logout').classList.remove('hidden');$('who').textContent=(profile.display_name||profile.email||u.email)+' · '+(role==='owner'?'Propietario':'Vendedor')+(navigator.onLine?'':' · SIN INTERNET');
- buildNav();await refresh();
+ buildNav();await refresh();if(offlineDataMode)$('who').textContent+=' · DATOS GUARDADOS';
 };
 $('sell').onclick=async()=>{
  const id=$('sproduct').value,qty=Number(String($('sqty').value).replace(',','.'));
