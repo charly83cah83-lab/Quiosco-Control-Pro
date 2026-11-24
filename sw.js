@@ -1,4 +1,4 @@
-const CACHE_NAME='quiosco-shell-v2';
+const CACHE_NAME='quiosco-shell-v3';
 const BASE='/Quiosco-Control-Pro/';
 const CORE=[BASE,BASE+'manifest.webmanifest',BASE+'icon.svg'];
 const CDN='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.57.0';
