@@ -397,7 +397,7 @@ async function offlineUpdateBanner(){
  const host=$('offlineStatus');if(!host)return;
  let queue=[];try{queue=await offlineQueueForUser()}catch(_){}
  const pending=queue.filter(x=>x.status==='pending').length,conflicts=queue.filter(x=>x.status==='conflict').length;
- if(!navigator.onLine||offlineDataMode){host.innerHTML='SIN CONEXIÓN CON EL SERVIDOR · '+(role==='seller'?'Puedes registrar ventas con el inventario guardado en este teléfono.':'Consulta únicamente los datos guardados en este teléfono.')+(pending?' · '+pending+' venta(s) pendiente(s) de sincronizar.':'')+(conflicts?' · '+conflicts+' venta(s) requieren revisión.':'');host.style.display='block';return}
+ if(!navigator.onLine||offlineDataMode){host.innerHTML=(!navigator.onLine?'SIN INTERNET':'SERVIDOR SIN RESPUESTA')+' · '+(role==='seller'?'Puedes registrar ventas con el inventario guardado en este teléfono.':'Consulta únicamente los datos guardados en este teléfono.')+(pending?' · '+pending+' venta(s) pendiente(s) de sincronizar.':'')+(conflicts?' · '+conflicts+' venta(s) requieren revisión.':'')+(navigator.onLine?' <button type="button" id="offlineReconnect">Reintentar conexión</button>':'');host.style.display='block';const retry=$('offlineReconnect');if(retry)retry.onclick=async()=>{offlineDataMode=false;try{await refresh()}catch(e){msg('Todavía no se pudo conectar: '+e.message,true)}};return}
  if(pending||conflicts){host.innerHTML='CONEXIÓN DISPONIBLE · '+pending+' venta(s) pendiente(s) · '+conflicts+' requieren revisión. <button type="button" id="offlineRetry">Sincronizar / reintentar</button>';host.style.display='block';const b=$('offlineRetry');if(b)b.onclick=()=>syncOfflineSales(true)}
  else{host.textContent='';host.style.display='none'}
 }
