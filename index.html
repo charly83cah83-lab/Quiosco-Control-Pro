@@ -607,11 +607,17 @@ showTab=async function(id){
   $(id)?.classList.add('active');
   $('nav').querySelectorAll('button').forEach(b=>b.classList.toggle('active',b.dataset.tab===id));
   if(id==='products')offlineRenderProducts();
-  else{
+  else if(id==='sale'&&role==='seller'){
+   /* El formulario de venta del vendedor permanece intacto para capturar ventas offline. */
+  }else{
    const saved=await offlineGetView(id);
-   if(saved&&saved.html)$(id).innerHTML=saved.html;
-   else if($(id))$(id).innerHTML='<div class="notice">Esta sección aún no se ha guardado en este teléfono. Conéctate y abre esta sección para guardar su información.</div>';
+   if(saved&&saved.html){
+    $(id).innerHTML=saved.html;
+    const stamp=saved.saved_at?new Date(saved.saved_at).toLocaleString('es-ES'):'sin fecha disponible';
+    $(id).insertAdjacentHTML('afterbegin','<div class="offline-copy-note notice">COPIA LOCAL · Última sincronización: '+esc(stamp)+'. La información puede haber cambiado en otro teléfono.</div>');
+   }else if($(id))$(id).innerHTML='<div class="notice">Esta sección aún no se ha guardado en este teléfono. Conéctate y abre esta sección para guardar su información.</div>';
   }
+  if(id==='calculator')initCalculator();
   offlineReadOnlyControls();await offlineUpdateBanner();return;
  }
  showTabBeforeFullOffline(id);
