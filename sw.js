@@ -6,7 +6,7 @@ self.addEventListener('install',event=>{
  event.waitUntil((async()=>{
   const cache=await caches.open(CACHE_NAME);
   await cache.addAll(CORE);
-  try{const response=await fetch(CDN,{mode:'cors',cache:'reload'});if(response.ok)await cache.put(CDN,response)}catch(_){}
+  const response=await fetch(CDN,{mode:'cors',cache:'reload'});if(!response.ok)throw new Error('No se pudo guardar la biblioteca necesaria para el modo offline');await cache.put(CDN,response)
   await self.skipWaiting();
  })());
 });
