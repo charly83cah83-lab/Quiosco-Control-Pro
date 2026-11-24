@@ -1,0 +1,19 @@
+{
+  "name": "Kiosco Control Pro",
+  "short_name": "Kiosco Pro",
+  "lang": "es",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0b1024",
+  "theme_color": "#101a3a",
+  "description": "Control privado de inventario, ventas y ganancias",
+  "icons": [
+    {
+      "src": "./icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
