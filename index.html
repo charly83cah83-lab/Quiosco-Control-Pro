@@ -146,18 +146,22 @@ async function loadSellerSales(){
  host.innerHTML='<p class="muted">Cargando tus ventas e inventario...</p>';
  try{
   const period=checkError(await db.from('accounting_periods').select('id,period_no,started_at').eq('status','active').order('started_at',{ascending:false}).limit(1).maybeSingle());
-  const [salesResult,movementsResult]=await Promise.all([
+  const [salesResult,movementsResult,cashResult]=await Promise.all([
    db.from('sales').select('id,receipt_no,total,sold_at,status,accounting_period_id,sale_items(product_id,product_name,quantity,unit_price,line_total)').eq('seller_id',user.id).eq('status','completed').order('sold_at',{ascending:false}).limit(200),
-   period?db.from('stock_movements').select('product_id,movement_type,quantity,created_at').gte('created_at',period.started_at).order('created_at',{ascending:true}):Promise.resolve({data:[],error:null})
+   period?db.from('stock_movements').select('product_id,movement_type,quantity,created_at').gte('created_at',period.started_at).order('created_at',{ascending:true}):Promise.resolve({data:[],error:null}),
+   period?db.from('cash_settlements').select('amount').eq('seller_id',user.id).eq('accounting_period_id',period.id):Promise.resolve({data:[],error:null})
   ]);
   if(salesResult.error)throw salesResult.error;
   if(movementsResult.error)throw movementsResult.error;
-  const sales=salesResult.data||[],movements=movementsResult.data||[];
+  if(cashResult.error)throw cashResult.error;
+  const sales=salesResult.data||[],movements=movementsResult.data||[],cashRows=cashResult.data||[];
   const totalAll=sales.reduce((a,s)=>a+Number(s.total||0),0);
   const currentSales=period?sales.filter(s=>s.accounting_period_id===period.id):[];
   const currentTotal=currentSales.reduce((a,s)=>a+Number(s.total||0),0);
   const sellerPart=Math.round((currentTotal*commissionPercent/100+Number.EPSILON)*100)/100;
   const ownerPart=Math.round((currentTotal-sellerPart+Number.EPSILON)*100)/100;
+  const cashReceived=cashRows.reduce((a,x)=>a+Number(x.amount||0),0);
+  const pendingOwner=ownerPart-cashReceived;
   const productStats=products.map(p=>{
    const pm=movements.filter(m=>m.product_id===p.id);
    const net=pm.reduce((a,m)=>a+Number(m.quantity||0),0);
@@ -171,7 +175,7 @@ async function loadSellerSales(){
   const historyRows=[];
   sales.forEach(s=>(s.sale_items||[]).forEach(i=>historyRows.push('<tr><td>'+date(s.sold_at)+'</td><td>#'+esc(s.receipt_no)+'</td><td>'+esc(i.product_name||'Producto')+'</td><td>'+money(i.quantity)+'</td><td>'+money(i.unit_price)+' CUP</td><td>'+money(i.line_total)+' CUP</td><td>'+money(s.total)+' CUP</td></tr>')));
   host.innerHTML=
-   '<div class="grid"><div class="stat"><small>Ventas del ciclo actual · n.º '+(period?esc(period.period_no):'—')+'</small><strong>'+money(currentTotal)+' CUP</strong></div><div class="stat"><small>Entregar al propietario ('+(100-commissionPercent)+'%)</small><strong>'+money(ownerPart)+' CUP</strong></div><div class="stat"><small>Tu comisión ('+commissionPercent+'%)</small><strong class="good">'+money(sellerPart)+' CUP</strong></div><div class="stat"><small>Ventas acumuladas de tu historial</small><strong>'+money(totalAll)+' CUP</strong></div></div>'+
+   '<div class="grid"><div class="stat"><small>Ventas del ciclo actual · n.º '+(period?esc(period.period_no):'—')+'</small><strong>'+money(currentTotal)+' CUP</strong></div><div class="stat"><small>Tu parte para el propietario ('+(100-commissionPercent)+'%)</small><strong>'+money(ownerPart)+' CUP</strong></div><div class="stat"><small>Tu comisión ('+commissionPercent+'%)</small><strong class="good">'+money(sellerPart)+' CUP</strong></div><div class="stat"><small>Dinero recibido por el propietario</small><strong>'+money(cashReceived)+' CUP</strong></div><div class="stat"><small>Pendiente de entregar</small><strong>'+money(pendingOwner)+' CUP</strong></div><div class="stat"><small>Ventas acumuladas de tu historial</small><strong>'+money(totalAll)+' CUP</strong></div></div>'+
    '<div class="notice">El reparto del ciclo actual se calcula sobre las ventas confirmadas de este período. Las ventas de períodos anteriores permanecen en el historial y no se vuelven a sumar a esta liquidación.</div>'+
    '<h3>Control de productos en este ciclo</h3><div class="tablewrap"><table><thead><tr><th>Producto</th><th>Existencia al inicio</th><th>Entradas</th><th>Vendiste este ciclo</th><th>Vendiste históricamente</th><th>Disponible ahora</th></tr></thead><tbody>'+(productRows||'<tr><td colspan="6" class="empty">No hay productos activos.</td></tr>')+'</tbody></table></div>'+
    '<h3 style="margin-top:24px">Todas tus ventas confirmadas</h3><div class="tablewrap"><table><thead><tr><th>Fecha</th><th>Recibo</th><th>Producto vendido</th><th>Cantidad</th><th>Precio unitario</th><th>Importe del producto</th><th>Total del recibo</th></tr></thead><tbody>'+(historyRows.join('')||'<tr><td colspan="7" class="empty">Todavía no tienes ventas confirmadas.</td></tr>')+'</tbody></table></div>'+
