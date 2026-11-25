@@ -17,6 +17,59 @@
 <div id="auth" class="card auth"><h2>Acceso privado</h2><p class="muted">Entra con tu correo y contraseña. Cada usuario ve únicamente las funciones de su perfil.</p><div class="field"><label>Correo electrónico</label><input id="email" type="email" autocomplete="email" placeholder="tu@correo.com"></div><div class="field"><label>Contraseña</label><input id="password" type="password" autocomplete="current-password" placeholder="Contraseña"></div><div class="actions"><button id="login">Iniciar sesión</button><button id="signup" class="secondary">Crear cuenta</button></div><p id="authmsg" class="muted"></p><p class="muted" style="font-size:12px">El propietario debe confirmar su correo para activar el acceso de propietario. No compartas tu contraseña.</p></div>
 <main id="app" class="hidden"><nav class="nav" id="nav"></nav><div id="dash" class="section active"></div>
 <section id="sellerSales" class="section card"><h2>Mis ventas e inventario</h2><p class="muted">Consulta el inventario al inicio del ciclo, las entradas, lo que has vendido y lo que queda disponible. También puedes revisar todas tus ventas anteriores.</p><div id="sellerSalesContent"></div></section>
+<section id="ipv" class="section card ipv-section">
+<style>
+#ipv{padding:0;overflow:hidden;background:linear-gradient(160deg,#061b58 0%,#07123a 52%,#081b4c 100%);border:1px solid #168dff;box-shadow:0 0 22px #087dff55}
+#ipv .ipv-head{padding:18px 20px;background:linear-gradient(110deg,#061b55,#101b66 65%,#082c62);border-bottom:1px solid #168dff;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+#ipv .ipv-title{font-size:clamp(19px,3vw,27px);font-weight:900;margin:0;color:#fff;text-shadow:0 0 12px #2b9cff}
+#ipv .ipv-period{min-width:170px;padding:10px 12px;border-radius:12px;border:1px solid #168dff;background:#07183f;color:#fff}
+#ipv .ipv-content{padding:14px}
+#ipv .ipv-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:14px}
+#ipv .ipv-stat{padding:15px 12px;border-radius:17px;color:#fff;text-align:center;border:1px solid #ffffff55;box-shadow:0 5px 18px #0005;min-width:0}
+#ipv .ipv-stat small{display:block;font-weight:800;font-size:13px;line-height:1.25}
+#ipv .ipv-stat strong{display:block;font-size:clamp(19px,3vw,27px);font-weight:900;margin-top:7px;overflow-wrap:anywhere}
+#ipv .ipv-blue{background:linear-gradient(145deg,#087ff5,#073eb5)}
+#ipv .ipv-green{background:linear-gradient(145deg,#08d65d,#087b3c)}
+#ipv .ipv-purple{background:linear-gradient(145deg,#9b26f4,#4a08a8)}
+#ipv .ipv-gold{background:linear-gradient(145deg,#ffb400,#c66a00)}
+#ipv .ipv-table-wrap{overflow:auto;border:2px solid #168dff;border-radius:15px;background:#edf4ff;box-shadow:0 0 15px #168dff55}
+#ipv table{width:100%;min-width:650px;border-collapse:separate;border-spacing:0;color:#101b40;margin:0}
+#ipv th{background:linear-gradient(180deg,#087ef4,#063d9e);color:#fff;text-align:center;padding:13px 9px;font-size:13px;text-transform:none;white-space:nowrap;border-right:1px solid #64baff}
+#ipv td{padding:10px 9px;text-align:center;font-weight:800;border-right:1px solid #a9c5ef;border-bottom:1px solid #a9c5ef;white-space:nowrap}
+#ipv tbody tr:nth-child(odd){background:#f7faff}
+#ipv tbody tr:nth-child(even){background:#dce9fc}
+#ipv td:first-child{text-align:left;white-space:normal;min-width:160px}
+#ipv .ipv-final{display:inline-block;min-width:62px;padding:6px 12px;border-radius:12px;background:linear-gradient(145deg,#35e878,#0caa4b);color:#fff;box-shadow:0 3px 8px #138e4c55}
+#ipv .ipv-zero{background:#8b99b5}
+#ipv .ipv-note{margin:12px 2px;color:#c9dcff;font-size:12px}
+#ipv .ipv-actions{display:flex;gap:9px;flex-wrap:wrap;margin:14px 2px}
+#ipv .ipv-actions button{flex:1;min-width:130px;padding:13px;border-radius:14px;box-shadow:0 4px 12px #0004}
+#ipv .ipv-refresh{background:linear-gradient(110deg,#00c853,#087a3a)}
+#ipv .ipv-print{background:linear-gradient(110deg,#087ff5,#073eaf)}
+#ipv .ipv-chart{background:linear-gradient(110deg,#9b20ef,#5100a8)}
+#ipv .ipv-chart-panel{display:none;background:#0d1e50;border:1px solid #2e8dff;border-radius:14px;padding:14px;margin-top:12px;color:#fff}
+#ipv .ipv-chart-panel.open{display:block}
+#ipv .ipv-bar-row{display:grid;grid-template-columns:minmax(100px,1fr) 3fr auto;gap:10px;align-items:center;margin:9px 0;font-size:12px}
+#ipv .ipv-bar-track{height:12px;border-radius:20px;background:#263c70;overflow:hidden}
+#ipv .ipv-bar{height:100%;border-radius:20px;background:linear-gradient(90deg,#13a1ff,#36e879)}
+#ipv .ipv-foot{padding:12px 16px;background:#06143c;border-top:1px solid #168dff;color:#e4efff;display:flex;gap:10px;justify-content:space-between;flex-wrap:wrap;font-size:12px}
+#ipv .ipv-dot{display:inline-block;width:9px;height:9px;border-radius:50%;background:#18e66e;box-shadow:0 0 9px #18e66e;margin-right:6px}
+@media(max-width:700px){#ipv .ipv-stats{grid-template-columns:repeat(2,minmax(0,1fr))}#ipv .ipv-content{padding:9px}#ipv .ipv-head{padding:14px}#ipv .ipv-stat{padding:13px 8px}}
+@media print{body *{visibility:hidden!important}#ipv,#ipv *{visibility:visible!important}#ipv{position:absolute;left:0;top:0;width:100%;background:white!important;box-shadow:none!important}#ipv .ipv-actions,#ipv .ipv-period{display:none!important}}
+</style>
+<div class="ipv-head">
+ <h2 class="ipv-title">📦 IPV – Inventario de Productos y Ventas</h2>
+ <select id="ipvPeriod" class="ipv-period" aria-label="Período del inventario"><option value="">Cargando períodos...</option></select>
+</div>
+<div class="ipv-content">
+ <div id="ipvStats" class="ipv-stats"></div>
+ <div class="ipv-table-wrap"><table><thead><tr><th>Producto</th><th>Inicio</th><th>Entrada</th><th>Disponible</th><th>Venta</th><th>Final</th></tr></thead><tbody id="ipvRows"><tr><td colspan="6">Cargando inventario real...</td></tr></tbody></table></div>
+ <div class="ipv-actions"><button type="button" id="ipvRefresh" class="ipv-refresh">↻ Actualizar datos</button><button type="button" id="ipvPrint" class="ipv-print">▣ Imprimir reporte</button><button type="button" id="ipvChartToggle" class="ipv-chart">▥ Ver gráficos</button></div>
+ <div id="ipvChart" class="ipv-chart-panel"></div>
+ <p id="ipvNote" class="ipv-note">Las cifras se consultan directamente de los movimientos reales del inventario. No se modifica ningún registro.</p>
+</div>
+<div class="ipv-foot"><span>🔒 Informe de solo consulta · Propietario</span><span><i class="ipv-dot"></i><span id="ipvUpdated">Actualizando…</span></span></div>
+</section>
 <section id="products" class="section card"><h2>Inventario</h2><div id="productForm" class="hidden"><h3>Crear producto</h3><div class="row"><div class="field"><label>Nombre</label><input id="pname" placeholder="Ej. Refresco"></div><div class="field"><label>Categoría</label><input id="pcat" placeholder="Bebidas"></div><div class="field"><label>Precio de venta</label><input id="pprice" type="number" min="0" step=".01"></div><div class="field"><label>Costo de compra (solo propietario)</label><input id="pcost" type="number" min="0" step=".01"></div><div class="field"><label>Existencia inicial</label><input id="pqty" type="number" min="0" step=".01" value="0"></div><div class="field"><label>Alerta de pocas unidades</label><input id="pthreshold" type="number" min="0" step=".01" value="3"></div></div><button id="addproduct">Guardar producto</button><hr style="border-color:var(--line);margin:20px 0"></div><div class="tablewrap"><table><thead><tr id="productHead"></tr></thead><tbody id="productRows"></tbody></table></div></section>
 <section id="delivery" class="section card"><h2>Entrada de mercancía</h2><p class="muted">Registra cada entrega del propietario. La existencia y el costo se guardan en el sistema.</p><div class="row"><div class="field"><label>Producto</label><select id="dproduct"></select></div><div class="field"><label>Cantidad recibida</label><input id="dqty" type="number" min=".01" step=".01"></div><div class="field owneronly"><label>Costo unitario</label><input id="dcost" type="number" min="0" step=".01"></div><div class="field"><label>Nota / referencia</label><input id="dnotes" placeholder="Entrega inicial, reposición..."></div></div><button id="deliver" class="owneronly">Registrar entrada</button></section>
 <section id="sale" class="section card"><h2>Registrar venta</h2><div class="row"><div class="field"><label>Producto</label><select id="sproduct"></select></div><div class="field"><label>Cantidad</label><input id="sqty" type="number" min=".01" step=".01" value="1"></div><div class="field"><label>Forma de pago</label><select id="spay"><option value="cash">Efectivo</option><option value="transfer">Transferencia</option><option value="other">Otro</option></select></div><div class="field" id="discountField"><label>Descuento total (solo propietario)</label><input id="sdiscount" type="number" min="0" step=".01" value="0"></div></div><div class="field" id="saleNoteField"><label>Nota</label><input id="snotes" placeholder="Opcional"></div><button id="sell">Confirmar venta</button><p class="muted">El servidor comprueba la existencia y calcula el total. Una venta confirmada no se duplica por tocar dos veces.</p></section>
@@ -130,10 +183,59 @@ function checkError(r){if(r.error)throw r.error;return r.data}
 async function enter(u){user=u;const r=await db.from('profiles').select('id,display_name,email,role,active').eq('id',u.id).maybeSingle();if(r.error)throw r.error;profile=r.data;if(!profile||!profile.active){await db.auth.signOut();throw new Error('Tu perfil aún no está activado. Confirma el correo y solicita al propietario que revise tu acceso.')}
 role=profile.role;$('auth').classList.add('hidden');$('app').classList.remove('hidden');$('logout').classList.remove('hidden');$('who').textContent=(profile.email||u.email||profile.display_name)+' · '+(role==='owner'?'PROPIETARIO':'VENDEDORA');
 buildNav();await refresh()}
-const navs=[['dash','Mi comisión'],['sellerSales','Mis ventas e inventario'],['products','Productos'],['delivery','Entradas'],['sale','Registrar venta'],['expenses','Gastos'],['cash','Dinero recibido'],['reports','Costos y gastos'],['cycles','Liquidaciones'],['history','Historial'],['yaisel','Mercancía de Yaisel'],['calculator','Calculadora inteligente']];
-function buildNav(){ $('nav').innerHTML=navs.filter(([id])=>role==='owner'||['dash','sellerSales','products','sale'].includes(id)).map(([id,n],i)=>'<button data-tab="'+id+'" class="'+(i===0?'active':'')+'">'+n+'</button>').join('');$('nav').querySelectorAll('button').forEach(b=>b.onclick=()=>showTab(b.dataset.tab));document.querySelectorAll('.owneronly').forEach(e=>e.classList.toggle('hidden',role!=='owner'));$('productForm').classList.toggle('hidden',role!=='owner');['delivery','expenses','cash','reports','cycles','history','yaisel'].forEach(id=>$(id).classList.toggle('hidden',role!=='owner'));$('sellerSales').classList.toggle('hidden',false);$('sellerSales').querySelector('h2').textContent=role==='owner'?'Ventas e inventario':'Mis ventas e inventario';$('discountField').classList.toggle('hidden',role!=='owner');$('saleNoteField').classList.toggle('hidden',role!=='owner');document.querySelector('#sale .field:has(#spay)').classList.toggle('hidden',role!=='owner');$('products').querySelector('h2').textContent=role==='owner'?'Inventario':'Productos disponibles';$('productHead').innerHTML=role==='owner'?'<th>Producto</th><th>Precio</th><th>Existencia</th><th>Estado</th><th>Acciones</th>':'<th>Producto</th><th>Precio de venta</th><th>Existencia disponible</th>'}
-function showTab(id){document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));$(id).classList.add('active');$('nav').querySelectorAll('button').forEach(b=>b.classList.toggle('active',b.dataset.tab===id));if(id==='calculator')initCalculator();if(id==='sellerSales')loadSellerSales();if(id==='cash')loadCash();if(id==='expenses')loadExpenses();if(id==='reports')loadReports();if(id==='cycles')loadCycles();if(id==='history')loadHistory();if(id==='yaisel'&&role==='owner')loadYaiselInventory()}
+const navs=[['dash','Mi comisión'],['sellerSales','Mis ventas e inventario'],['ipv','IPV Inventario'],['products','Productos'],['delivery','Entradas'],['sale','Registrar venta'],['expenses','Gastos'],['cash','Dinero recibido'],['reports','Costos y gastos'],['cycles','Liquidaciones'],['history','Historial'],['yaisel','Mercancía de Yaisel'],['calculator','Calculadora inteligente']];
+function buildNav(){ $('nav').innerHTML=navs.filter(([id])=>role==='owner'||['dash','sellerSales','products','sale'].includes(id)).map(([id,n],i)=>'<button data-tab="'+id+'" class="'+(i===0?'active':'')+'">'+n+'</button>').join('');$('nav').querySelectorAll('button').forEach(b=>b.onclick=()=>showTab(b.dataset.tab));document.querySelectorAll('.owneronly').forEach(e=>e.classList.toggle('hidden',role!=='owner'));$('productForm').classList.toggle('hidden',role!=='owner');['delivery','expenses','cash','reports','cycles','history','yaisel'].forEach(id=>$(id).classList.toggle('hidden',role!=='owner'));$('sellerSales').classList.toggle('hidden',false);$('ipv').classList.toggle('hidden',role!=='owner');$('sellerSales').querySelector('h2').textContent=role==='owner'?'Ventas e inventario':'Mis ventas e inventario';$('discountField').classList.toggle('hidden',role!=='owner');$('saleNoteField').classList.toggle('hidden',role!=='owner');document.querySelector('#sale .field:has(#spay)').classList.toggle('hidden',role!=='owner');$('products').querySelector('h2').textContent=role==='owner'?'Inventario':'Productos disponibles';$('productHead').innerHTML=role==='owner'?'<th>Producto</th><th>Precio</th><th>Existencia</th><th>Estado</th><th>Acciones</th>':'<th>Producto</th><th>Precio de venta</th><th>Existencia disponible</th>'}
+function showTab(id){document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));$(id).classList.add('active');$('nav').querySelectorAll('button').forEach(b=>b.classList.toggle('active',b.dataset.tab===id));if(id==='calculator')initCalculator();if(id==='sellerSales')loadSellerSales();if(id==='ipv'&&role==='owner')loadIPV();if(id==='cash')loadCash();if(id==='expenses')loadExpenses();if(id==='reports')loadReports();if(id==='cycles')loadCycles();if(id==='history')loadHistory();if(id==='yaisel'&&role==='owner')loadYaiselInventory()}
 async function refresh(){const cfg=await db.from('app_settings').select('seller_commission_percent').limit(1).maybeSingle();if(!cfg.error&&cfg.data)commissionPercent=Number(cfg.data.seller_commission_percent??5);await loadProducts();await loadDash();if(role==='seller')await loadSellerSales();if(role==='owner'){await loadCash();await loadExpenses()}}
+async function loadIPV(){
+ if(role!=='owner')return;
+ const rows=$('ipvRows');rows.innerHTML='<tr><td colspan="6">Cargando datos reales...</td></tr>';
+ try{
+  const periods=checkError(await db.from('accounting_periods').select('id,period_no,started_at,closed_at,status').order('period_no',{ascending:false}))||[];
+  const active=periods.find(p=>p.status==='active');
+  const select=$('ipvPeriod');
+  if(!periods.length){select.innerHTML='<option value="">Sin períodos</option>';rows.innerHTML='<tr><td colspan="6" class="empty">No hay períodos registrados.</td></tr>';return}
+  if(!select.dataset.ready){
+   select.innerHTML=periods.map(p=>'<option value="'+p.id+'">'+(p.status==='active'?'Ciclo actual':'Ciclo #'+p.period_no)+' · '+new Date(p.started_at).toLocaleDateString('es-ES')+'</option>').join('');
+   select.value=(active||periods[0]).id;select.dataset.ready='1';
+   select.onchange=()=>loadIPV();
+  }
+  const period=periods.find(p=>p.id===select.value)||active||periods[0];
+  const end=period.closed_at||new Date().toISOString();
+  const [movementsResult,postMovementsResult,salesResult]=await Promise.all([
+   db.from('stock_movements').select('product_id,movement_type,quantity,created_at').gte('created_at',period.started_at).lte('created_at',end).order('created_at',{ascending:true}).limit(5000),
+   db.from('stock_movements').select('product_id,quantity,created_at').gt('created_at',end).order('created_at',{ascending:true}).limit(5000),
+   db.from('sales').select('id,total,status,sold_at').eq('status','completed').gte('sold_at',period.started_at).lte('sold_at',end).order('sold_at',{ascending:true}).limit(2000)
+  ]);
+  if(movementsResult.error)throw movementsResult.error;if(postMovementsResult.error)throw postMovementsResult.error;if(salesResult.error)throw salesResult.error;
+  const movements=movementsResult.data||[],postMovements=postMovementsResult.data||[],sales=salesResult.data||[];
+  const productRows=products.map(p=>{
+   const pm=movements.filter(m=>m.product_id===p.id);
+   const deliveries=pm.filter(m=>m.movement_type==='delivery').reduce((a,m)=>a+Number(m.quantity||0),0);
+   const sold=pm.filter(m=>m.movement_type==='sale').reduce((a,m)=>a+Math.abs(Number(m.quantity||0)),0);
+   const net=pm.reduce((a,m)=>a+Number(m.quantity||0),0);
+   const laterNet=postMovements.filter(m=>m.product_id===p.id).reduce((a,m)=>a+Number(m.quantity||0),0);
+   const final=Number(p.stock_qty)-laterNet;
+   const opening=Math.max(0,final-net);
+   const available=opening+deliveries;
+   const adjustments=pm.filter(m=>m.movement_type==='adjustment').reduce((a,m)=>a+Number(m.quantity||0),0);
+   return {name:p.name,unit:p.unit||'unidades',opening,deliveries,available,sold,final,adjustments};
+  });
+  rows.innerHTML=productRows.map(p=>'<tr><td><strong>'+esc(p.name)+'</strong><br><small>'+esc(p.unit)+'</small></td><td>'+money(p.opening)+'</td><td>'+money(p.deliveries)+'</td><td>'+money(p.available)+'</td><td>'+money(p.sold)+'</td><td><span class="ipv-final '+(p.final<=0?'ipv-zero':'')+'">'+money(p.final)+'</span></td></tr>').join('')||'<tr><td colspan="6" class="empty">No hay productos activos.</td></tr>';
+  const finalTotal=productRows.reduce((a,p)=>a+p.final,0);
+  const totalSales=sales.reduce((a,s)=>a+Number(s.total||0),0);
+  $('ipvStats').innerHTML='<div class="ipv-stat ipv-blue"><small>📦 Productos activos</small><strong>'+products.length+'</strong></div><div class="ipv-stat ipv-green"><small>🛒 Ventas del período</small><strong>'+sales.length+'</strong></div><div class="ipv-stat ipv-purple"><small>📈 Total vendido</small><strong>'+money(totalSales)+' CUP</strong></div><div class="ipv-stat ipv-gold"><small>📦 Existencia final</small><strong>'+money(finalTotal)+'</strong></div>';
+  const adjusted=productRows.filter(p=>Math.abs(p.adjustments)>0.0001);
+  $('ipvNote').textContent='Cálculo: Inicio + Entrada = Disponible; Venta muestra las salidas por ventas; Final refleja la existencia real actual del producto. '+(adjusted.length?'Hay ajustes registrados en este período; por eso el Final puede diferir de Disponible menos Venta.':'Los movimientos de ajuste, si existieran, quedan reflejados en la existencia final real.')+' No se modifica ningún registro.';
+  const max=Math.max(1,...productRows.map(p=>p.final));
+  $('ipvChart').innerHTML='<strong>Existencia final por producto</strong>'+productRows.map(p=>'<div class="ipv-bar-row"><span>'+esc(p.name)+'</span><div class="ipv-bar-track"><div class="ipv-bar" style="width:'+Math.max(0,Math.min(100,p.final/max*100))+'%"></div></div><b>'+money(p.final)+'</b></div>').join('');
+  $('ipvUpdated').textContent='Datos consultados: '+new Date().toLocaleString('es-ES');
+ }catch(e){rows.innerHTML='<tr><td colspan="6" class="bad">No se pudo cargar el IPV: '+esc(e.message)+'</td></tr>';msg('No se pudo cargar el IPV: '+e.message,true)}
+}
+$('ipvRefresh').onclick=()=>loadIPV();
+$('ipvPrint').onclick=()=>window.print();
+$('ipvChartToggle').onclick=()=>{$('ipvChart').classList.toggle('open');$('ipvChartToggle').textContent=$('ipvChart').classList.contains('open')?'▥ Ocultar gráficos':'▥ Ver gráficos'};
+
 async function loadProducts(){const r=await db.from('products').select('id,name,category,unit,sale_price,stock_qty,low_stock_threshold,active').eq('active',true).order('name');products=checkError(r)||[];let costs={};if(role==='owner'&&products.length){const cr=await db.from('product_costs').select('product_id,purchase_cost').in('product_id',products.map(p=>p.id));if(!cr.error)(cr.data||[]).forEach(x=>costs[x.product_id]=Number(x.purchase_cost||0))}$('productRows').innerHTML=products.map(p=>'<tr><td>'+esc(p.name)+(role==='owner'?'<br><small>'+esc(p.category||'')+'</small>':'')+'</td><td>'+money(p.sale_price)+'</td>'+(role==='owner'?'<td>'+money(p.stock_qty)+'</td><td>'+(Number(p.stock_qty)<=Number(p.low_stock_threshold)?'<span class="bad">Stock bajo</span>':'<span class="good">Disponible</span>')+'</td><td><div class="actions"><button type="button" data-edit-price="'+p.id+'" class="secondary">Precio venta</button><button type="button" data-edit-cost="'+p.id+'" class="secondary">Costo</button><button type="button" data-adjust-stock="'+p.id+'" class="secondary">Quitar cantidad</button><button type="button" data-deactivate="'+p.id+'" class="danger">Eliminar producto</button></div><small>Costo unitario: '+money(costs[p.id]||0)+'</small></td>':'<td>'+money(p.stock_qty)+'</td>')+'</tr>').join('')||'<tr><td colspan="'+(role==='owner'?5:3)+'" class="empty">Aún no hay productos.</td></tr>';if(role==='owner'){$('productRows').querySelectorAll('[data-edit-price]').forEach(b=>b.onclick=()=>changeProductPrice(b.dataset.editPrice));$('productRows').querySelectorAll('[data-edit-cost]').forEach(b=>b.onclick=()=>changeProductCost(b.dataset.editCost));$('productRows').querySelectorAll('[data-adjust-stock]').forEach(b=>b.onclick=()=>adjustStock(b.dataset.adjustStock));$('productRows').querySelectorAll('[data-deactivate]').forEach(b=>b.onclick=()=>deactivateProduct(b.dataset.deactivate))}for(const id of ['dproduct','sproduct'])$(id).innerHTML=products.map(p=>'<option value="'+p.id+'">'+esc(p.name)+' · '+money(p.sale_price)+' · Stock: '+money(p.stock_qty)+'</option>').join('')}
 async function changeProductPrice(id){if(role!=='owner')return;const p=products.find(x=>x.id===id);if(!p)return;const answer=prompt('Nuevo precio de venta para '+p.name+':',String(p.sale_price));if(answer===null)return;const price=Number(String(answer).replace(',','.'));if(!Number.isFinite(price)||price<=0){msg('Escribe un precio mayor que cero.',true);return}try{const r=checkError(await db.from('products').update({sale_price:price,updated_at:new Date().toISOString()}).eq('id',id).select('id').maybeSingle());if(!r)throw new Error('No se pudo actualizar. Verifica que hayas entrado como propietario.');await refresh();msg('Precio de venta actualizado.')}catch(e){msg('No se pudo cambiar el precio: '+e.message,true)}}
 async function changeProductCost(id){if(role!=='owner')return;const p=products.find(x=>x.id===id);if(!p)return;const current=await db.from('product_costs').select('purchase_cost').eq('product_id',id).maybeSingle();if(current.error){msg(current.error.message,true);return}const answer=prompt('Costo de compra por unidad para '+p.name+':',String(current.data?.purchase_cost??0));if(answer===null)return;const cost=Number(String(answer).replace(',','.'));if(!Number.isFinite(cost)||cost<0){msg('Escribe un costo válido.',true);return}try{checkError(await db.from('product_costs').upsert({product_id:id,purchase_cost:cost,updated_at:new Date().toISOString()},{onConflict:'product_id'}));await refresh();msg('Costo unitario actualizado.')}catch(e){msg('No se pudo actualizar el costo: '+e.message,true)}}
