@@ -202,20 +202,22 @@ async function loadIPV(){
   }
   const period=periods.find(p=>p.id===select.value)||active||periods[0];
   const end=period.closed_at||new Date().toISOString();
-  const [movementsResult,salesResult]=await Promise.all([
+  const [movementsResult,postMovementsResult,salesResult]=await Promise.all([
    db.from('stock_movements').select('product_id,movement_type,quantity,created_at').gte('created_at',period.started_at).lte('created_at',end).order('created_at',{ascending:true}).limit(5000),
+   db.from('stock_movements').select('product_id,quantity,created_at').gt('created_at',end).order('created_at',{ascending:true}).limit(5000),
    db.from('sales').select('id,total,status,sold_at').eq('status','completed').gte('sold_at',period.started_at).lte('sold_at',end).order('sold_at',{ascending:true}).limit(2000)
   ]);
-  if(movementsResult.error)throw movementsResult.error;if(salesResult.error)throw salesResult.error;
-  const movements=movementsResult.data||[],sales=salesResult.data||[];
+  if(movementsResult.error)throw movementsResult.error;if(postMovementsResult.error)throw postMovementsResult.error;if(salesResult.error)throw salesResult.error;
+  const movements=movementsResult.data||[],postMovements=postMovementsResult.data||[],sales=salesResult.data||[];
   const productRows=products.map(p=>{
    const pm=movements.filter(m=>m.product_id===p.id);
    const deliveries=pm.filter(m=>m.movement_type==='delivery').reduce((a,m)=>a+Number(m.quantity||0),0);
    const sold=pm.filter(m=>m.movement_type==='sale').reduce((a,m)=>a+Math.abs(Number(m.quantity||0)),0);
    const net=pm.reduce((a,m)=>a+Number(m.quantity||0),0);
-   const opening=Math.max(0,Number(p.stock_qty)-net);
+   const laterNet=postMovements.filter(m=>m.product_id===p.id).reduce((a,m)=>a+Number(m.quantity||0),0);
+   const final=Number(p.stock_qty)-laterNet;
+   const opening=Math.max(0,final-net);
    const available=opening+deliveries;
-   const final=Number(p.stock_qty);
    const adjustments=pm.filter(m=>m.movement_type==='adjustment').reduce((a,m)=>a+Number(m.quantity||0),0);
    return {name:p.name,unit:p.unit||'unidades',opening,deliveries,available,sold,final,adjustments};
   });
